@@ -6,7 +6,7 @@ import Blog from './models/Blog.js';
 const app = express();
 const port = 3000;
 
-const mongoURL = 'mongodb://mongo:27017/microblog';
+const mongoURL = process.env.MONGO_URL || 'mongodb://mongo:27017/microblog';
 
 app.use(cors());
 app.use(express.json());
