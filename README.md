@@ -660,100 +660,11 @@ jobs:
 ## Flowchart:  
 ![alt text](images/week7-architecture.png) 
 
-## Task 1 – Create and Run Multi-Container App with Docker Compose:
+## Create and Run Multi-Container App with Docker Compose and healthchecks and everything:
 Already done in previous week.
 
-## Task 2 – Volume Mounting and Persistent Data
-Already done in previous week.
 
-## Task 3 – Healthchecks and Logging
-Already done in previous week in Dockerfile, but also added in `docker-compose.yml` now:
-```yml
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-    restart: on-failure
-```
-
-## Task 4 – Docker Compose + CI Integration
-in main `cicd.yml` file:
-```yml
-  e2e-tests:
-    needs: [backend-docker-build, frontend-docker-build]
-    uses: ./.github/workflows/e2e-tests.yml
-```
-
-the `e2e-tests.yml` file:
-```yml
-name: E2E Tests
-
-on:
-  workflow_call:
-    outputs:
-      e2e_status:
-        description: "Result of E2E tests"
-        value: ${{ jobs.e2e.outputs.e2e_status }}
-
-jobs:
-  e2e:
-    runs-on: ubuntu-latest
-    outputs:
-      e2e_status: ${{ steps.e2e_status_step.outcome }}
-
-    steps:
-      - uses: actions/checkout@v3
-      - uses: docker/setup-buildx-action@v3
-
-      - name: Build and Start Stack
-        run: docker compose up -d --build
-
-      - name: Wait for backend to be healthy
-        run: |
-          for i in {1..10}; do
-            if docker-compose ps | grep backend | grep healthy; then
-              echo "Backend is healthy"
-              exit 0
-            fi
-            echo "Waiting for backend to be healthy..."
-            sleep 5
-          done
-          echo "Backend is not healthy after waiting"
-          docker-compose logs > compose_logs.txt
-          exit 1
-
-      - name: Run API E2E Tests
-        id: e2e_status_step
-        run: |
-          docker-compose exec backend npm test | tee backend-test-results.log || (
-            docker-compose logs > compose_logs.txt;
-            exit 1
-          )
-
-      - name: Upload backend test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-test-results
-          path: backend-test-results.log
-
-      - name: Upload Compose Logs on Failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: compose-logs
-          path: compose_logs.txt
-
-      - name: Shutdown
-        if: always()
-        run: docker-compose down --volumes
-```
-
-## Task 5 – Lightweight Base Images and Optimization
-Already done in previous week.
-
-## Task 6 – Azure VM Setup and Manual Deployment
+## Azure VM Setup and Manual Deployment
 this is similar to week3:
 
 ### Generate the SSH key:
@@ -892,7 +803,7 @@ sudo docker-compose logs --tail=50
 ```
 
 
-## Task 7 – Deploy to Azure VM via CI/CD (GitHub Actions)
+## Deploy to Azure VM via CI/CD (GitHub Actions)
 
 ### we start by Adding repository secrets in GitHub:
 (Settings > Secrets and variables > Actions):  
@@ -951,6 +862,10 @@ jobs:
       - name: Cleanup key
         run: rm key.pem
 ```
+
+
+and now we can see that the containers are running in the azure:
+![alt text](images/azure-containers.png) 
 
 ---
 
